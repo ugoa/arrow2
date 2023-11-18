@@ -5,6 +5,9 @@ mod serialize;
 use crate::{array::Array, chunk::Chunk, datatypes::Field, error::Result};
 
 use super::api;
+pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
+pub use api::ColumnDescription;
+use api::RowSetBuffer;
 pub use schema::infer_descriptions;
 pub use serialize::serialize;
 
@@ -12,35 +15,33 @@ pub use serialize::serialize;
 ///
 /// This is useful when separating the serialization (CPU-bounded) to writing to the DB (IO-bounded).
 pub fn buffer_from_description(
-    descriptions: Vec<api::ColumnDescription>,
+    descriptions: Vec<ColumnDescription>,
     capacity: usize,
-) -> api::buffers::ColumnarBuffer<api::buffers::AnyColumnBuffer> {
-    let descs = descriptions
-        .into_iter()
-        .map(|description| api::buffers::BufferDescription {
-            nullable: description.could_be_nullable(),
-            kind: api::buffers::BufferKind::from_data_type(description.data_type).unwrap(),
-        });
+) -> ColumnarAnyBuffer {
+    let descs = descriptions.into_iter().map(|description| {
+        BufferDesc::from_data_type(description.data_type, description.could_be_nullable()).unwrap()
+    });
 
-    api::buffers::buffer_from_description(capacity, descs)
+    ColumnarAnyBuffer::from_descs(capacity, descs)
 }
 
 /// A writer of [`Chunk`]s to an ODBC [`api::Prepared`] statement.
 /// # Implementation
 /// This struct mixes CPU-bounded and IO-bounded tasks and is not ideal
 /// for an `async` context.
-pub struct Writer<'a> {
+pub struct Writer<S> {
     fields: Vec<Field>,
-    buffer: api::buffers::ColumnarBuffer<api::buffers::AnyColumnBuffer>,
-    prepared: api::Prepared<'a>,
+    buffer: ColumnarAnyBuffer,
+    prepared: api::Prepared<S>,
 }
 
-impl<'a> Writer<'a> {
+impl<S> Writer<S> {
     /// Creates a new [`Writer`].
     /// # Errors
     /// Errors iff any of the types from [`Field`] is not supported.
-    pub fn try_new(prepared: api::Prepared<'a>, fields: Vec<Field>) -> Result<Self> {
+    pub fn try_new(prepared: api::Prepared<S>, fields: Vec<Field>) -> Result<Self> {
         let buffer = buffer_from_description(infer_descriptions(&fields)?, 0);
+
         Ok(Self {
             fields,
             buffer,
@@ -57,11 +58,11 @@ impl<'a> Writer<'a> {
             self.buffer = buffer_from_description(infer_descriptions(&self.fields)?, chunk.len());
         }
 
-        self.buffer.set_num_rows(chunk.len());
+        *self.buffer.mut_num_fetch_rows() = chunk.len();
 
         // serialize (CPU-bounded)
         for (i, column) in chunk.arrays().iter().enumerate() {
-            serialize(column.as_ref(), &mut self.buffer.column_mut(i))?;
+            serialize(column.as_ref(), &mut self.buffer.column(i))?;
         }
 
         // write (IO-bounded)
