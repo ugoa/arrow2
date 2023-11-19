@@ -35,7 +35,10 @@ pub struct Writer<S> {
     prepared: api::Prepared<S>,
 }
 
-impl<S> Writer<S> {
+impl<S> Writer<S>
+where
+    S: api::handles::AsStatementRef,
+{
     /// Creates a new [`Writer`].
     /// # Errors
     /// Errors iff any of the types from [`Field`] is not supported.
@@ -64,6 +67,20 @@ impl<S> Writer<S> {
         for (i, column) in chunk.arrays().iter().enumerate() {
             serialize(column.as_ref(), &mut self.buffer.column(i))?;
         }
+
+        let buf_descs = infer_descriptions(&self.fields)?
+            .into_iter()
+            .map(|description| {
+                BufferDesc::from_data_type(description.data_type, description.could_be_nullable())
+                    .unwrap()
+            });
+
+        let mut prebound = self
+            .prepared
+            .into_column_inserter(chunk.len(), buf_descs)
+            .unwrap();
+
+        prebound.set_num_rows(chunk.len());
 
         // write (IO-bounded)
         self.prepared.execute(&self.buffer)?;
