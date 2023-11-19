@@ -9,7 +9,7 @@ pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
 pub use api::ColumnDescription;
 use api::RowSetBuffer;
 pub use schema::infer_descriptions;
-pub use serialize::serialize;
+pub use serialize::{serialize, serialize2};
 
 /// Creates a [`api::buffers::ColumnarBuffer`] from [`api::ColumnDescription`]s.
 ///
@@ -56,18 +56,6 @@ where
     /// # Errors
     /// Errors iff the execution of the statement fails.
     pub fn write<A: AsRef<dyn Array>>(&mut self, chunk: &Chunk<A>) -> Result<()> {
-        if chunk.len() > self.buffer.num_rows() {
-            // if the chunk is larger, we re-allocate new buffers to hold it
-            self.buffer = buffer_from_description(infer_descriptions(&self.fields)?, chunk.len());
-        }
-
-        *self.buffer.mut_num_fetch_rows() = chunk.len();
-
-        // serialize (CPU-bounded)
-        for (i, column) in chunk.arrays().iter().enumerate() {
-            serialize(column.as_ref(), &mut self.buffer.column(i).as_view_mut)?;
-        }
-
         let buf_descs = infer_descriptions(&self.fields)?
             .into_iter()
             .map(|description| {
@@ -82,8 +70,15 @@ where
 
         prebound.set_num_rows(chunk.len());
 
-        // write (IO-bounded)
-        self.prepared.execute(&self.buffer)?;
+        for (i, column) in chunk.arrays().iter().enumerate() {
+            serialize2(column.as_ref(), &mut prebound.column_mut(i));
+        }
+        prebound.execute().unwrap();
+
+        // serialize (CPU-bounded)
+        // for (i, column) in chunk.arrays().iter().enumerate() {
+        //     serialize(column.as_ref(), &mut self.buffer.column(i).as_view_mut)?;
+        // }
         Ok(())
     }
 }
