@@ -171,15 +171,15 @@ fn primitive_optional<T: NativeType>(array: &PrimitiveArray<T>, values: &mut Nul
 }
 
 fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
-    for (row_idx, value) in array
+    for (row_index, value) in array
         .values()
         .chunks(array.size())
         .collect::<Vec<_>>()
         .iter()
         .enumerate()
     {
-        writer.ensure_max_element_length(value.len(), row_idx);
-        writer.set_cell(row_idx, Some(value));
+        writer.ensure_max_element_length(value.len(), row_index);
+        writer.set_cell(row_index, Some(value));
     }
 }
 
