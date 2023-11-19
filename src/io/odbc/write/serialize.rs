@@ -14,7 +14,6 @@ use api::buffers::AnySliceMut;
 
 pub fn serialize2(array: &dyn Array, column: &mut AnySliceMut) -> Result<()> {
     match array.data_type() {
-
         DataType::Utf8 => {
             if let AnySliceMut::Text(writer) = column {
                 utf8::<i32>(array.as_any().downcast_ref().unwrap(), writer);
@@ -24,7 +23,7 @@ pub fn serialize2(array: &dyn Array, column: &mut AnySliceMut) -> Result<()> {
             }
         }
         other => Err(Error::nyi(format!("{other:?} to ODBC"))),
-    }  
+    }
 
     // todo!();
 }
@@ -172,8 +171,14 @@ fn primitive_optional<T: NativeType>(array: &PrimitiveArray<T>, values: &mut Nul
 }
 
 fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
-    writer.set_max_len(array.size());
-    writer.write(array.iter())
+    writer.ensure_max_element_length(array.len(), 0);
+    array
+        .values()
+        .chunks(array.size())
+        .collect::<Vec<_>>()
+        .iter()
+        .enumerate()
+        .for_each(|(i, value)| writer.set_cell(i, Some(value)));
 }
 
 fn binary<O: Offset>(array: &BinaryArray<O>, values: &mut BinColumnSliceMut) {
@@ -184,10 +189,6 @@ fn binary<O: Offset>(array: &BinaryArray<O>, values: &mut BinColumnSliceMut) {
         .map(|x| (x[1] - x[0]).to_usize())
         .max()
         .unwrap_or(0);
-
-    values.ensure_max_element_length(element_length, num_rows_to_copy)
-    writer.set_max_len(max_len);
-    writer.write(array.iter())
 }
 
 fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
@@ -199,6 +200,6 @@ fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
         .max()
         .unwrap_or(0);
 
-    writer.set_max_len(max_len);
-    writer.write(array.iter().map(|x| x.map(|x| x.as_bytes())))
+    // writer.set_max_len(max_len);
+    // writer.write(array.iter().map(|x| x.map(|x| x.as_bytes())))
 }

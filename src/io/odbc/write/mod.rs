@@ -7,7 +7,6 @@ use crate::{array::Array, chunk::Chunk, datatypes::Field, error::Result};
 use super::api;
 pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
 pub use api::ColumnDescription;
-use api::RowSetBuffer;
 pub use schema::infer_descriptions;
 pub use serialize::{serialize, serialize2};
 
@@ -31,7 +30,6 @@ pub fn buffer_from_description(
 /// for an `async` context.
 pub struct Writer<S> {
     fields: Vec<Field>,
-    buffer: ColumnarAnyBuffer,
     prepared: api::Prepared<S>,
 }
 
@@ -42,14 +40,8 @@ where
     /// Creates a new [`Writer`].
     /// # Errors
     /// Errors iff any of the types from [`Field`] is not supported.
-    pub fn try_new(prepared: api::Prepared<S>, fields: Vec<Field>) -> Result<Self> {
-        let buffer = buffer_from_description(infer_descriptions(&fields)?, 0);
-
-        Ok(Self {
-            fields,
-            buffer,
-            prepared,
-        })
+    pub fn new(prepared: api::Prepared<S>, fields: Vec<Field>) -> Self {
+        Self { fields, prepared }
     }
 
     /// Writes a chunk to the writer.
@@ -71,7 +63,7 @@ where
         prebound.set_num_rows(chunk.len());
 
         for (i, column) in chunk.arrays().iter().enumerate() {
-            serialize2(column.as_ref(), &mut prebound.column_mut(i));
+            serialize(column.as_ref(), &mut prebound.column_mut(i));
         }
         prebound.execute().unwrap();
 
