@@ -10,15 +10,17 @@ use crate::types::NativeType;
 use super::super::api;
 use super::super::api::buffers::NullableSliceMut;
 
+use api::buffers::AnySliceMut;
+
 /// Serializes an [`Array`] to [`api::buffers::AnyColumnViewMut`]
 /// This operation is CPU-bounded
-pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut) -> Result<()> {
+pub fn serialize(array: &dyn Array, column: &mut AnySliceMut) -> Result<()> {
     match array.data_type() {
         DataType::Boolean => {
-            if let api::buffers::AnyColumnViewMut::Bit(values) = column {
+            if let AnySliceMut::Bit(values) = column {
                 bool(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
-            } else if let api::buffers::AnyColumnViewMut::NullableBit(values) = column {
+            } else if let AnySliceMut::NullableBit(values) = column {
                 bool_optional(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -26,10 +28,10 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Int16 => {
-            if let api::buffers::AnyColumnViewMut::I16(values) = column {
+            if let AnySliceMut::I16(values) = column {
                 primitive(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
-            } else if let api::buffers::AnyColumnViewMut::NullableI16(values) = column {
+            } else if let AnySliceMut::NullableI16(values) = column {
                 primitive_optional(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -37,10 +39,10 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Int32 => {
-            if let api::buffers::AnyColumnViewMut::I32(values) = column {
+            if let AnySliceMut::I32(values) = column {
                 primitive(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
-            } else if let api::buffers::AnyColumnViewMut::NullableI32(values) = column {
+            } else if let AnySliceMut::NullableI32(values) = column {
                 primitive_optional(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -48,10 +50,10 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Float32 => {
-            if let api::buffers::AnyColumnViewMut::F32(values) = column {
+            if let AnySliceMut::F32(values) = column {
                 primitive(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
-            } else if let api::buffers::AnyColumnViewMut::NullableF32(values) = column {
+            } else if let AnySliceMut::NullableF32(values) = column {
                 primitive_optional(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -59,10 +61,10 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Float64 => {
-            if let api::buffers::AnyColumnViewMut::F64(values) = column {
+            if let AnySliceMut::F64(values) = column {
                 primitive(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
-            } else if let api::buffers::AnyColumnViewMut::NullableF64(values) = column {
+            } else if let AnySliceMut::NullableF64(values) = column {
                 primitive_optional(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -70,7 +72,7 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Utf8 => {
-            if let api::buffers::AnyColumnViewMut::Text(values) = column {
+            if let AnySliceMut::Text(values) = column {
                 utf8::<i32>(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -78,7 +80,7 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::LargeUtf8 => {
-            if let api::buffers::AnyColumnViewMut::Text(values) = column {
+            if let AnySliceMut::Text(values) = column {
                 utf8::<i64>(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -86,7 +88,7 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::Binary => {
-            if let api::buffers::AnyColumnViewMut::Binary(values) = column {
+            if let AnySliceMut::Binary(values) = column {
                 binary::<i32>(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -94,7 +96,7 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::LargeBinary => {
-            if let api::buffers::AnyColumnViewMut::Binary(values) = column {
+            if let AnySliceMut::Binary(values) = column {
                 binary::<i64>(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
@@ -102,7 +104,7 @@ pub fn serialize(array: &dyn Array, column: &mut api::buffers::AnyColumnViewMut)
             }
         }
         DataType::FixedSizeBinary(_) => {
-            if let api::buffers::AnyColumnViewMut::Binary(values) = column {
+            if let AnySliceMut::Binary(values) = column {
                 fixed_binary(array.as_any().downcast_ref().unwrap(), values);
                 Ok(())
             } else {
