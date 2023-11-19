@@ -1,4 +1,4 @@
-use api::buffers::{BinColumnWriter, TextColumnWriter};
+use api::buffers::{BinColumnSliceMut, TextColumnSliceMut};
 
 use crate::array::*;
 use crate::bitmap::Bitmap;
@@ -154,12 +154,12 @@ fn primitive_optional<T: NativeType>(array: &PrimitiveArray<T>, values: &mut Nul
     write_validity(array.validity(), indicators);
 }
 
-fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnWriter) {
+fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
     writer.set_max_len(array.size());
     writer.write(array.iter())
 }
 
-fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnWriter) {
+fn binary<O: Offset>(array: &BinaryArray<O>, values: &mut BinColumnSliceMut) {
     let max_len = array
         .offsets()
         .buffer()
@@ -167,11 +167,13 @@ fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnWriter) {
         .map(|x| (x[1] - x[0]).to_usize())
         .max()
         .unwrap_or(0);
+
+    values.ensure_max_element_length(element_length, num_rows_to_copy)
     writer.set_max_len(max_len);
     writer.write(array.iter())
 }
 
-fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnWriter<u8>) {
+fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
     let max_len = array
         .offsets()
         .buffer()

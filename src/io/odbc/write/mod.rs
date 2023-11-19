@@ -65,7 +65,7 @@ where
 
         // serialize (CPU-bounded)
         for (i, column) in chunk.arrays().iter().enumerate() {
-            serialize(column.as_ref(), &mut self.buffer.column(i))?;
+            serialize(column.as_ref(), &mut self.buffer.column(i).as_view_mut)?;
         }
 
         let buf_descs = infer_descriptions(&self.fields)?
