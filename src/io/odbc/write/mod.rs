@@ -8,7 +8,7 @@ use super::api;
 pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
 pub use api::ColumnDescription;
 pub use schema::infer_descriptions;
-pub use serialize::{serialize, serialize2};
+pub use serialize::serialize;
 
 /// Creates a [`api::buffers::ColumnarBuffer`] from [`api::ColumnDescription`]s.
 ///
@@ -67,10 +67,6 @@ where
         }
         prebound.execute().unwrap();
 
-        // serialize (CPU-bounded)
-        // for (i, column) in chunk.arrays().iter().enumerate() {
-        //     serialize(column.as_ref(), &mut self.buffer.column(i).as_view_mut)?;
-        // }
         Ok(())
     }
 }

@@ -12,22 +12,6 @@ use super::super::api::buffers::NullableSliceMut;
 
 use api::buffers::AnySliceMut;
 
-pub fn serialize2(array: &dyn Array, column: &mut AnySliceMut) -> Result<()> {
-    match array.data_type() {
-        DataType::Utf8 => {
-            if let AnySliceMut::Text(writer) = column {
-                utf8::<i32>(array.as_any().downcast_ref().unwrap(), writer);
-                Ok(())
-            } else {
-                Err(Error::nyi("serialize utf8 to non-text ODBC"))
-            }
-        }
-        other => Err(Error::nyi(format!("{other:?} to ODBC"))),
-    }
-
-    // todo!();
-}
-
 /// Serializes an [`Array`] to [`api::buffers::AnyColumnViewMut`]
 /// This operation is CPU-bounded
 pub fn serialize(array: &dyn Array, column: &mut AnySliceMut) -> Result<()> {
