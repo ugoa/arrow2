@@ -171,6 +171,10 @@ fn primitive_optional<T: NativeType>(array: &PrimitiveArray<T>, values: &mut Nul
 }
 
 fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
+    // Since the length of each elment is idential and fixed as `array.size`,
+    // we only need to reallocate and rebind the buffer once.
+    writer.ensure_max_element_length(array.size(), 0);
+
     for (row_index, value) in array
         .values()
         .chunks(array.size())
@@ -178,7 +182,6 @@ fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
         .iter()
         .enumerate()
     {
-        writer.ensure_max_element_length(value.len(), row_index);
         writer.set_cell(row_index, Some(value));
     }
 }
