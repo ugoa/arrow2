@@ -186,7 +186,8 @@ fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
     }
 }
 
-fn binary<O: Offset>(array: &BinaryArray<O>, values: &mut BinColumnSliceMut) {
+fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnSliceMut) {
+    // Get the largest length from all the elements
     let max_len = array
         .offsets()
         .buffer()
@@ -194,6 +195,10 @@ fn binary<O: Offset>(array: &BinaryArray<O>, values: &mut BinColumnSliceMut) {
         .map(|x| (x[1] - x[0]).to_usize())
         .max()
         .unwrap_or(0);
+    writer.ensure_max_element_length(max_len, 0);
+
+    (0..array.offsets().buffer().windows(2).len())
+        .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
 }
 
 fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
@@ -204,7 +209,8 @@ fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
         .map(|x| (x[1] - x[0]).to_usize())
         .max()
         .unwrap_or(0);
+    writer.ensure_max_element_length(max_len, 0);
 
-    // writer.set_max_len(max_len);
-    // writer.write(array.iter().map(|x| x.map(|x| x.as_bytes())))
+    (0..array.offsets().buffer().windows(2).len())
+        .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx).map(|s| s.as_bytes())));
 }
