@@ -181,8 +181,8 @@ fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnSliceMut) {
         .unwrap_or(0);
     writer.ensure_max_element_length(max_len, 0);
 
-    (0..array.offsets().buffer().windows(2).len())
-        .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
+    let total_elements = array.offsets().buffer().windows(2).len();
+    (0..total_elements).for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
 }
 
 fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
@@ -195,6 +195,7 @@ fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
         .unwrap_or(0);
     writer.ensure_max_element_length(max_len, 0);
 
-    (0..array.offsets().buffer().windows(2).len())
+    let total_elements = array.offsets().buffer().windows(2).len();
+    (0..total_elements)
         .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx).map(|s| s.as_bytes())));
 }
