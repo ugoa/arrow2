@@ -155,7 +155,7 @@ fn primitive_optional<T: NativeType>(array: &PrimitiveArray<T>, values: &mut Nul
 }
 
 fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
-    // Since the length of each elment is idential and fixed as `array.size`,
+    // Since the length of each elment is identical and fixed as `array.size`,
     // we only need to reallocate and rebind the buffer once.
     writer.ensure_max_element_length(array.size(), 0);
 
@@ -181,8 +181,8 @@ fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnSliceMut) {
         .unwrap_or(0);
     writer.ensure_max_element_length(max_len, 0);
 
-    let total_elements = array.offsets().buffer().windows(2).len();
-    (0..total_elements).for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
+    (0..array.offsets().len_proxy()) // loop index of each elements
+        .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
 }
 
 fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
@@ -195,7 +195,6 @@ fn utf8<O: Offset>(array: &Utf8Array<O>, writer: &mut TextColumnSliceMut<u8>) {
         .unwrap_or(0);
     writer.ensure_max_element_length(max_len, 0);
 
-    let total_elements = array.offsets().buffer().windows(2).len();
-    (0..total_elements)
+    (0..array.offsets().len_proxy()) // loop index of each elements
         .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx).map(|s| s.as_bytes())));
 }
