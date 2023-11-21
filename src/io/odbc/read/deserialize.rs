@@ -9,7 +9,7 @@ use crate::datatypes::{DataType, TimeUnit};
 use crate::offset::{Offsets, OffsetsBuffer};
 use crate::types::NativeType;
 
-use super::super::api::buffers::AnySlice;
+use odbc_api::buffers::AnySlice;
 
 /// Deserializes a [`AnySlice`] into an array of [`DataType`].
 /// This is CPU-bounded

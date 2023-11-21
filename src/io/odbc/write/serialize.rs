@@ -1,5 +1,3 @@
-use api::buffers::{BinColumnSliceMut, TextColumnSliceMut};
-
 use crate::array::*;
 use crate::bitmap::Bitmap;
 use crate::datatypes::DataType;
@@ -7,10 +5,9 @@ use crate::error::{Error, Result};
 use crate::offset::Offset;
 use crate::types::NativeType;
 
-use super::super::api;
-use super::super::api::buffers::NullableSliceMut;
-
-use api::buffers::AnySliceMut;
+use super::super::api::buffers::{
+    AnySliceMut, BinColumnSliceMut, NullableSliceMut, TextColumnSliceMut,
+};
 
 /// Serializes an [`Array`] to [`api::buffers::AnyColumnViewMut`]
 /// This operation is CPU-bounded
