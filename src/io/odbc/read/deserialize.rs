@@ -1,6 +1,4 @@
 use chrono::{NaiveDate, NaiveDateTime};
-use odbc_api::buffers::{BinColumnView, TextColumnView};
-use odbc_api::Bit;
 
 use crate::array::{Array, BinaryArray, BooleanArray, PrimitiveArray, Utf8Array};
 use crate::bitmap::{Bitmap, MutableBitmap};
@@ -9,7 +7,8 @@ use crate::datatypes::{DataType, TimeUnit};
 use crate::offset::{Offsets, OffsetsBuffer};
 use crate::types::NativeType;
 
-use odbc_api::buffers::AnySlice;
+use super::super::api::buffers::{AnySlice, BinColumnView, TextColumnView};
+use super::super::api::Bit;
 
 /// Deserializes a [`AnySlice`] into an array of [`DataType`].
 /// This is CPU-bounded
