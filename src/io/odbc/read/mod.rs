@@ -10,12 +10,10 @@ pub use super::api::ColumnDescription;
 pub use super::api::Error;
 pub use super::api::ResultSetMetadata;
 
-use crate::array::{Array, BinaryArray, BooleanArray, Int32Array, Int64Array, Utf8Array};
+use crate::array::Array;
 use crate::chunk::Chunk;
-use crate::datatypes::{DataType, Field, TimeUnit};
 use crate::error::Result;
 use crate::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
-// use crate::io::odbc::read::{buffer_from_metadata, deserialize, infer_schema};
 
 struct Reader {
     connection_string: String,
@@ -39,7 +37,7 @@ impl Reader {
         query: &str,
         max_batch_size: Option<usize>,
     ) -> Result<Vec<Chunk<Box<dyn Array>>>> {
-        let conn = self
+        let conn: Connection = self
             .env
             .connect_with_connection_string(
                 self.connection_string.as_str(),
