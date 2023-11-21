@@ -5,9 +5,8 @@ use crate::error::{Error, Result};
 use crate::offset::Offset;
 use crate::types::NativeType;
 
-use super::super::api::buffers::{
-    AnySliceMut, BinColumnSliceMut, NullableSliceMut, TextColumnSliceMut,
-};
+use odbc_api as api;
+use odbc_api::buffers::{AnySliceMut, BinColumnSliceMut, NullableSliceMut, TextColumnSliceMut};
 
 /// Serializes an [`Array`] to [`api::buffers::AnyColumnViewMut`]
 /// This operation is CPU-bounded

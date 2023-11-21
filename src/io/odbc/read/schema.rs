@@ -5,7 +5,7 @@ use super::super::api;
 use super::super::api::ResultSetMetadata;
 
 /// Infers the Arrow [`Field`]s from a [`ResultSetMetadata`]
-pub fn infer_schema(result_set_metadata: &impl ResultSetMetadata) -> Result<Vec<Field>> {
+pub fn infer_schema(result_set_metadata: &mut impl ResultSetMetadata) -> Result<Vec<Field>> {
     let num_cols: u16 = result_set_metadata.num_result_cols().unwrap() as u16;
 
     let fields = (0..num_cols)

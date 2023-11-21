@@ -5,6 +5,7 @@ mod serialize;
 use crate::{array::Array, chunk::Chunk, datatypes::Field, error::Result};
 
 use super::api;
+use crate::io::odbc::api::{Connection, ConnectionOptions, Environment};
 pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
 pub use api::ColumnDescription;
 pub use schema::infer_descriptions;
@@ -28,38 +29,51 @@ pub fn buffer_from_description(
 /// # Implementation
 /// This struct mixes CPU-bounded and IO-bounded tasks and is not ideal
 /// for an `async` context.
-pub struct Writer<S> {
-    fields: Vec<Field>,
-    prepared: api::Prepared<S>,
+pub struct Writer {
+    // fields: Vec<Field>,
+    // prepared: api::Prepared<S>,
+    connection_string: String,
+    env: Environment,
+    connection_options: ConnectionOptions,
 }
 
-impl<S> Writer<S>
-where
-    S: api::handles::AsStatementRef,
-{
-    /// Creates a new [`Writer`].
-    /// # Errors
-    /// Errors iff any of the types from [`Field`] is not supported.
-    pub fn new(prepared: api::Prepared<S>, fields: Vec<Field>) -> Self {
-        Self { fields, prepared }
+impl Writer {
+    pub fn new(connection_string: String, login_timeout_sec: Option<u32>) -> Self {
+        Self {
+            connection_string: connection_string,
+            env: Environment::new().unwrap(),
+            connection_options: ConnectionOptions {
+                login_timeout_sec: login_timeout_sec,
+            },
+        }
     }
 
     /// Writes a chunk to the writer.
     /// # Errors
     /// Errors iff the execution of the statement fails.
-    pub fn write<A: AsRef<dyn Array>>(&mut self, chunk: &Chunk<A>) -> Result<()> {
-        let buf_descs = infer_descriptions(&self.fields)?
-            .into_iter()
-            .map(|description| {
-                BufferDesc::from_data_type(description.data_type, description.could_be_nullable())
-                    .unwrap()
-            });
-
-        let mut prebound = self
-            .prepared
-            .into_column_inserter(chunk.len(), buf_descs)
+    pub fn write<A: AsRef<dyn Array>>(
+        &mut self,
+        fields: Vec<Field>,
+        chunk: &Chunk<A>,
+        query: &str,
+    ) -> Result<()> {
+        let conn: Connection = self
+            .env
+            .connect_with_connection_string(
+                self.connection_string.as_str(),
+                self.connection_options,
+            )
             .unwrap();
 
+        let buf_descs = infer_descriptions(&fields)?.into_iter().map(|description| {
+            BufferDesc::from_data_type(description.data_type, description.could_be_nullable())
+                .unwrap()
+        });
+
+        let prepared = conn.prepare(query).unwrap();
+        let mut prebound = prepared
+            .into_column_inserter(chunk.len(), buf_descs)
+            .unwrap();
         prebound.set_num_rows(chunk.len());
 
         for (i, column) in chunk.arrays().iter().enumerate() {
