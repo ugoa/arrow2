@@ -77,7 +77,7 @@ impl Writer {
         prebound.set_num_rows(chunk.len());
 
         for (i, column) in chunk.arrays().iter().enumerate() {
-            serialize(column.as_ref(), &mut prebound.column_mut(i));
+            serialize(column.as_ref(), &mut prebound.column_mut(i)).unwrap();
         }
         prebound.execute().unwrap();
 
