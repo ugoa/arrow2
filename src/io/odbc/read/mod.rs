@@ -69,7 +69,7 @@ impl Reader {
 
 /// Creates a [`api::buffers::ColumnarBuffer`] from the metadata.
 /// # Errors
-/// If the driver provides an incorrect [`api::ResultSetMetadata`]
+/// Iff the driver provides an incorrect [`api::ResultSetMetadata`]
 pub fn buffer_from_metadata(
     result_set_metadata: &mut impl ResultSetMetadata,
     capacity: usize,
