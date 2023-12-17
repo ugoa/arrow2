@@ -33,14 +33,16 @@ pub struct Writer {
     // fields: Vec<Field>,
     // prepared: api::Prepared<S>,
     connection_string: String,
+    query: String,
     env: Environment,
     connection_options: ConnectionOptions,
 }
 
 impl Writer {
-    pub fn new(connection_string: String, login_timeout_sec: Option<u32>) -> Self {
+    pub fn new(connection_string: String, query: String, login_timeout_sec: Option<u32>) -> Self {
         Self {
             connection_string: connection_string,
+            query: query,
             env: Environment::new().unwrap(),
             connection_options: ConnectionOptions {
                 login_timeout_sec: login_timeout_sec,
@@ -51,12 +53,7 @@ impl Writer {
     /// Writes a chunk to the writer.
     /// # Errors
     /// Errors iff the execution of the statement fails.
-    pub fn write<A: AsRef<dyn Array>>(
-        &mut self,
-        fields: Vec<Field>,
-        chunk: &Chunk<A>,
-        query: &str,
-    ) -> Result<()> {
+    pub fn write<A: AsRef<dyn Array>>(&mut self, chunk: &Chunk<A>) -> Result<()> {
         let conn: Connection = self
             .env
             .connect_with_connection_string(
@@ -65,12 +62,25 @@ impl Writer {
             )
             .unwrap();
 
+        let fields: Vec<Field> = chunk
+            .arrays()
+            .iter()
+            .enumerate()
+            .map(|(i, column)| {
+                Field::new(
+                    format!("column_{i}"),
+                    column.as_ref().data_type().clone(),
+                    column.as_ref().null_count() > 0, // As long as there is one slot as null, the type would be nullable
+                )
+            })
+            .collect();
+
         let buf_descs = infer_descriptions(&fields)?.into_iter().map(|description| {
             BufferDesc::from_data_type(description.data_type, description.could_be_nullable())
                 .unwrap()
         });
 
-        let prepared = conn.prepare(query).unwrap();
+        let prepared = conn.prepare(self.query.as_str()).unwrap();
         let mut prebound = prepared
             .into_column_inserter(chunk.len(), buf_descs)
             .unwrap();
