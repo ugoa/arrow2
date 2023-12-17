@@ -9,13 +9,18 @@ use arrow2::io::odbc::write::{buffer_from_description, infer_descriptions, seria
 use super::read::read;
 use super::{setup_empty_table, ENV, MSSQL};
 
+use arrow2::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
+use arrow2::io::odbc::write::Writer;
+
 fn test(
     expected: Chunk<Box<dyn Array>>,
     fields: Vec<Field>,
     type_: &str,
     table_name: &str,
 ) -> Result<()> {
-    let connection = ENV.connect_with_connection_string(MSSQL).unwrap();
+    let connection = ENV
+        .connect_with_connection_string(MSSQL, ConnectionOptions::default())
+        .unwrap();
     setup_empty_table(&connection, table_name, &[type_]).unwrap();
 
     let query = &format!("INSERT INTO {table_name} (a) VALUES (?)");
@@ -23,13 +28,9 @@ fn test(
 
     let mut buffer = buffer_from_description(infer_descriptions(&fields)?, expected.len());
 
-    // write
-    buffer.set_num_rows(expected.len());
-    let array = &expected.columns()[0];
+    let mut writer = Writer::new(MSSQL.to_string(), query.to_string(), None);
 
-    serialize(array.as_ref(), &mut buffer.column_mut(0))?;
-
-    a.execute(&buffer).unwrap();
+    writer.write(&expected);
 
     // read
     let query = format!("SELECT a FROM {table_name} ORDER BY id");

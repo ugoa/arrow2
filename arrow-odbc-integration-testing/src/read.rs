@@ -4,7 +4,7 @@ use arrow2::array::{Array, BinaryArray, BooleanArray, Int32Array, Int64Array, Ut
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, TimeUnit};
 use arrow2::error::Result;
-use arrow2::io::odbc::api::{Connection, Cursor, Environment};
+use arrow2::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
 use arrow2::io::odbc::read::{buffer_from_metadata, deserialize, infer_schema};
 
 use super::{setup_empty_table, ENV, MSSQL};
