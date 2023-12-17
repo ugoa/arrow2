@@ -1,10 +1,10 @@
 services:
-
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    image: mcr.microsoft.com/azure-sql-edge
     ports:
       - 1433:1433
-
     environment:
-      - MSSQL_SA_PASSWORD=My@Test@Password1
-    command: ["/opt/mssql/bin/sqlservr", "--accept-eula", "--reset-sa-password"]
+       MSSQL_SA_PASSWORD: My@Test@Password1
+       ACCEPT_EULA: "Y"
+    volumes:
+      - /var/lib/docker/volumes/mssql_db/_data:/var/opt/data

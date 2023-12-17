@@ -15,7 +15,7 @@ use crate::chunk::Chunk;
 use crate::error::Result;
 use crate::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
 
-struct Reader {
+pub struct Reader {
     connection_string: String,
     query: String,
     connection_options: ConnectionOptions,
