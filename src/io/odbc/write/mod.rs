@@ -30,11 +30,8 @@ pub fn buffer_from_description(
 /// This struct mixes CPU-bounded and IO-bounded tasks and is not ideal
 /// for an `async` context.
 pub struct Writer {
-    // fields: Vec<Field>,
-    // prepared: api::Prepared<S>,
     connection_string: String,
     query: String,
-    env: Environment,
     connection_options: ConnectionOptions,
 }
 
@@ -43,7 +40,6 @@ impl Writer {
         Self {
             connection_string: connection_string,
             query: query,
-            env: Environment::new().unwrap(),
             connection_options: ConnectionOptions {
                 login_timeout_sec: login_timeout_sec,
             },
@@ -54,8 +50,9 @@ impl Writer {
     /// # Errors
     /// Errors iff the execution of the statement fails.
     pub fn write<A: AsRef<dyn Array>>(&mut self, chunk: &Chunk<A>) -> Result<()> {
-        let conn: Connection = self
-            .env
+        let env = Environment::new().unwrap();
+
+        let conn: Connection = env
             .connect_with_connection_string(
                 self.connection_string.as_str(),
                 self.connection_options,

@@ -17,28 +17,24 @@ use crate::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
 
 struct Reader {
     connection_string: String,
-    env: Environment,
+    query: String,
     connection_options: ConnectionOptions,
 }
 
 impl Reader {
-    pub fn new(connection_string: String, login_timeout_sec: Option<u32>) -> Self {
+    pub fn new(connection_string: String, query: String, login_timeout_sec: Option<u32>) -> Self {
         Self {
             connection_string: connection_string,
-            env: Environment::new().unwrap(),
+            query: query,
             connection_options: ConnectionOptions {
                 login_timeout_sec: login_timeout_sec,
             },
         }
     }
 
-    pub fn read(
-        &self,
-        query: &str,
-        max_batch_size: Option<usize>,
-    ) -> Result<Vec<Chunk<Box<dyn Array>>>> {
-        let conn: Connection = self
-            .env
+    pub fn read(&self, max_batch_size: Option<usize>) -> Result<Vec<Chunk<Box<dyn Array>>>> {
+        let env = Environment::new().unwrap();
+        let conn: Connection = env
             .connect_with_connection_string(
                 self.connection_string.as_str(),
                 self.connection_options,
@@ -47,7 +43,7 @@ impl Reader {
 
         // conn.execute(query, ()).unwrap();
 
-        let mut a = conn.prepare(query).unwrap();
+        let mut a = conn.prepare(self.query.as_str()).unwrap();
         let fields = infer_schema(&mut a)?;
 
         let buffer = buffer_from_metadata(&mut a, max_batch_size.unwrap_or(100)).unwrap();
