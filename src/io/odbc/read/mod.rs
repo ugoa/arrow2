@@ -19,20 +19,27 @@ struct Reader {
     connection_string: String,
     query: String,
     connection_options: ConnectionOptions,
+    max_batch_size: Option<usize>,
 }
 
 impl Reader {
-    pub fn new(connection_string: String, query: String, login_timeout_sec: Option<u32>) -> Self {
+    pub fn new(
+        connection_string: String,
+        query: String,
+        login_timeout_sec: Option<u32>,
+        max_batch_size: Option<usize>,
+    ) -> Self {
         Self {
             connection_string: connection_string,
             query: query,
             connection_options: ConnectionOptions {
                 login_timeout_sec: login_timeout_sec,
             },
+            max_batch_size: max_batch_size,
         }
     }
 
-    pub fn read(&self, max_batch_size: Option<usize>) -> Result<Vec<Chunk<Box<dyn Array>>>> {
+    pub fn read(&self) -> Result<Vec<Chunk<Box<dyn Array>>>> {
         let env = Environment::new().unwrap();
         let conn: Connection = env
             .connect_with_connection_string(
@@ -41,12 +48,10 @@ impl Reader {
             )
             .unwrap();
 
-        // conn.execute(query, ()).unwrap();
-
         let mut a = conn.prepare(self.query.as_str()).unwrap();
         let fields = infer_schema(&mut a)?;
 
-        let buffer = buffer_from_metadata(&mut a, max_batch_size.unwrap_or(100)).unwrap();
+        let buffer = buffer_from_metadata(&mut a, self.max_batch_size.unwrap_or(100)).unwrap();
 
         let cursor = a.execute(()).unwrap().unwrap();
         let mut cursor = cursor.bind_buffer(buffer).unwrap();
