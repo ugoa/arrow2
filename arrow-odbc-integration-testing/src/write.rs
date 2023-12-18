@@ -4,13 +4,12 @@ use arrow2::array::{Array, BinaryArray, BooleanArray, Int32Array, Utf8Array};
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field};
 use arrow2::error::Result;
-use arrow2::io::odbc::write::{buffer_from_description, infer_descriptions, serialize};
 
 use super::{setup_empty_table, ENV, MSSQL};
 
-use arrow2::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
-use arrow2::io::odbc::write::Writer;
+use arrow2::io::odbc::api::ConnectionOptions;
 use arrow2::io::odbc::read::Reader;
+use arrow2::io::odbc::write::Writer;
 
 fn test(
     expected: Chunk<Box<dyn Array>>,
@@ -23,12 +22,11 @@ fn test(
         .unwrap();
     setup_empty_table(&connection, table_name, &[type_]).unwrap();
 
-
     let write_query = &format!("INSERT INTO {table_name} (a) VALUES (?)");
 
     let mut writer = Writer::new(MSSQL.to_string(), write_query.to_string(), None);
 
-    writer.write(&expected);
+    writer.write(&expected)?;
 
     // read
     let read_query = format!("SELECT a FROM {table_name} ORDER BY id");
