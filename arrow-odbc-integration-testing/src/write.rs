@@ -6,11 +6,11 @@ use arrow2::datatypes::{DataType, Field};
 use arrow2::error::Result;
 use arrow2::io::odbc::write::{buffer_from_description, infer_descriptions, serialize};
 
-use super::read::read;
 use super::{setup_empty_table, ENV, MSSQL};
 
 use arrow2::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
 use arrow2::io::odbc::write::Writer;
+use arrow2::io::odbc::read::Reader;
 
 fn test(
     expected: Chunk<Box<dyn Array>>,
@@ -23,18 +23,17 @@ fn test(
         .unwrap();
     setup_empty_table(&connection, table_name, &[type_]).unwrap();
 
-    let query = &format!("INSERT INTO {table_name} (a) VALUES (?)");
-    let mut a = connection.prepare(query).unwrap();
 
-    let mut buffer = buffer_from_description(infer_descriptions(&fields)?, expected.len());
+    let write_query = &format!("INSERT INTO {table_name} (a) VALUES (?)");
 
-    let mut writer = Writer::new(MSSQL.to_string(), query.to_string(), None);
+    let mut writer = Writer::new(MSSQL.to_string(), write_query.to_string(), None);
 
     writer.write(&expected);
 
     // read
-    let query = format!("SELECT a FROM {table_name} ORDER BY id");
-    let chunks = read(&connection, &query)?.1;
+    let read_query = format!("SELECT a FROM {table_name} ORDER BY id");
+
+    let chunks = Reader::new(MSSQL.to_string(), read_query, None, None).read()?;
 
     assert_eq!(chunks[0], expected);
     Ok(())

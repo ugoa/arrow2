@@ -32,18 +32,12 @@ pub fn buffer_from_description(
 pub struct Writer {
     connection_string: String,
     query: String,
-    connection_options: ConnectionOptions,
+    login_timeout_sec: Option<u32>,
 }
 
 impl Writer {
     pub fn new(connection_string: String, query: String, login_timeout_sec: Option<u32>) -> Self {
-        Self {
-            connection_string: connection_string,
-            query: query,
-            connection_options: ConnectionOptions {
-                login_timeout_sec: login_timeout_sec,
-            },
-        }
+        Self { connection_string, query, login_timeout_sec }
     }
 
     /// Writes a chunk to the writer.
@@ -55,7 +49,9 @@ impl Writer {
         let conn: Connection = env
             .connect_with_connection_string(
                 self.connection_string.as_str(),
-                self.connection_options,
+                ConnectionOptions {
+                    login_timeout_sec: self.login_timeout_sec,
+                },
             )
             .unwrap();
 
