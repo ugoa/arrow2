@@ -168,6 +168,7 @@ fn fixed_binary(array: &FixedSizeBinaryArray, writer: &mut BinColumnSliceMut) {
 
 fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnSliceMut) {
     // Get the largest length from all the elements
+
     let max_len = array
         .offsets()
         .buffer()
@@ -175,7 +176,8 @@ fn binary<O: Offset>(array: &BinaryArray<O>, writer: &mut BinColumnSliceMut) {
         .map(|x| (x[1] - x[0]).to_usize())
         .max()
         .unwrap_or(0);
-    writer.ensure_max_element_length(max_len, 0)?;
+
+    writer.ensure_max_element_length(max_len, 0);
 
     (0..array.offsets().len_proxy()) // loop index of each elements
         .for_each(|row_idx| writer.set_cell(row_idx, array.get(row_idx)));
