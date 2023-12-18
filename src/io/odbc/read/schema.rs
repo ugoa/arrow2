@@ -58,7 +58,9 @@ fn column_to_data_type(data_type: &api::DataType) -> DataType {
         OdbcDataType::BigInt => DataType::Int64,
         OdbcDataType::TinyInt => DataType::Int8,
         OdbcDataType::Bit => DataType::Boolean,
-        OdbcDataType::Binary { length } => DataType::FixedSizeBinary(*length),
+        OdbcDataType::Binary { length } => length
+            .map(|l| DataType::FixedSizeBinary(l.get()))
+            .unwrap_or(DataType::FixedSizeBinary(0)),
         OdbcDataType::LongVarbinary { length: _ } | OdbcDataType::Varbinary { length: _ } => {
             DataType::Binary
         }
