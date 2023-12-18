@@ -23,7 +23,7 @@ pub fn infer_descriptions(fields: &[Field]) -> Result<Vec<api::ColumnDescription
         .collect()
 }
 
-fn data_type_to(data_type: &DataType) -> Result<api::DataType> {
+pub fn data_type_to(data_type: &DataType) -> Result<api::DataType> {
     Ok(match data_type {
         DataType::Boolean => api::DataType::Bit,
         DataType::Int16 => api::DataType::SmallInt,

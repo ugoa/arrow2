@@ -2,13 +2,13 @@
 mod schema;
 mod serialize;
 
-use crate::{array::Array, chunk::Chunk, datatypes::Field, error::Result};
+use crate::{array::Array, chunk::Chunk, error::Result};
 
 use super::api;
 use crate::io::odbc::api::{Connection, ConnectionOptions, Environment};
 pub use api::buffers::{BufferDesc, ColumnarAnyBuffer};
 pub use api::ColumnDescription;
-pub use schema::infer_descriptions;
+pub use schema::data_type_to;
 pub use serialize::serialize;
 
 /// Creates a [`api::buffers::ColumnarBuffer`] from [`api::ColumnDescription`]s.
@@ -37,7 +37,11 @@ pub struct Writer {
 
 impl Writer {
     pub fn new(connection_string: String, query: String, login_timeout_sec: Option<u32>) -> Self {
-        Self { connection_string, query, login_timeout_sec }
+        Self {
+            connection_string,
+            query,
+            login_timeout_sec,
+        }
     }
 
     /// Writes a chunk to the writer.
@@ -55,22 +59,12 @@ impl Writer {
             )
             .unwrap();
 
-        let fields: Vec<Field> = chunk
-            .arrays()
-            .iter()
-            .enumerate()
-            .map(|(i, column)| {
-                Field::new(
-                    format!("column_{i}"),
-                    column.as_ref().data_type().clone(),
-                    column.as_ref().null_count() > 0, // As long as there is one slot as null, the type would be nullable
-                )
-            })
-            .collect();
-
-        let buf_descs = infer_descriptions(&fields)?.into_iter().map(|description| {
-            BufferDesc::from_data_type(description.data_type, description.could_be_nullable())
-                .unwrap()
+        let buf_descs = chunk.arrays().iter().map(|array| {
+            BufferDesc::from_data_type(
+                data_type_to(array.as_ref().data_type()).unwrap(),
+                array.as_ref().null_count() > 0,
+            )
+            .unwrap()
         });
 
         let prepared = conn.prepare(self.query.as_str()).unwrap();
