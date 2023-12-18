@@ -18,7 +18,7 @@ use crate::io::odbc::api::{Connection, ConnectionOptions, Cursor, Environment};
 pub struct Reader {
     connection_string: String,
     query: String,
-    connection_options: ConnectionOptions,
+    login_timeout_sec: Option<u32>,
     max_batch_size: Option<usize>,
 }
 
@@ -30,12 +30,10 @@ impl Reader {
         max_batch_size: Option<usize>,
     ) -> Self {
         Self {
-            connection_string: connection_string,
-            query: query,
-            connection_options: ConnectionOptions {
-                login_timeout_sec: login_timeout_sec,
-            },
-            max_batch_size: max_batch_size,
+            connection_string,
+            query,
+            login_timeout_sec,
+            max_batch_size,
         }
     }
 
@@ -44,7 +42,9 @@ impl Reader {
         let conn: Connection = env
             .connect_with_connection_string(
                 self.connection_string.as_str(),
-                self.connection_options,
+                ConnectionOptions {
+                    login_timeout_sec: self.login_timeout_sec,
+                },
             )
             .unwrap();
 
@@ -81,14 +81,10 @@ pub fn buffer_from_metadata(
 ) -> std::result::Result<ColumnarAnyBuffer, Error> {
     let num_cols: u16 = result_set_metadata.num_result_cols()? as u16;
 
-    let col_descs = vec![ColumnDescription::default(); num_cols as usize];
-
-    for (i, col_desc) in col_descs.iter().enumerate() {
-        result_set_metadata.describe_col((i + 1) as u16, &mut col_desc.clone())?;
-    }
-
-    let descs = col_descs.into_iter().map(|description| {
-        BufferDesc::from_data_type(description.data_type, description.could_be_nullable()).unwrap()
+    let descs = (1..=num_cols).map(|i| {
+        let mut col_desc = ColumnDescription::default();
+        result_set_metadata.describe_col(i, &mut col_desc).unwrap();
+        BufferDesc::from_data_type(col_desc.data_type, col_desc.could_be_nullable()).unwrap()
     });
 
     Ok(ColumnarAnyBuffer::from_descs(capacity, descs))
