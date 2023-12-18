@@ -19,7 +19,7 @@ pub fn data_type_to(data_type: &DataType) -> Result<api::DataType> {
             length: NonZeroUsize::new(1),
         },
         DataType::Utf8 | DataType::LargeUtf8 => api::DataType::Varchar {
-            length: NonZeroUsize::new(0),
+            length: NonZeroUsize::new(1),
         },
         other => return Err(Error::nyi(format!("{other:?} to ODBC"))),
     })
