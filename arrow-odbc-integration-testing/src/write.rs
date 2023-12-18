@@ -13,7 +13,7 @@ use arrow2::io::odbc::write::Writer;
 
 fn test(
     expected: Chunk<Box<dyn Array>>,
-    fields: Vec<Field>,
+    _fields: Vec<Field>,
     type_: &str,
     table_name: &str,
 ) -> Result<()> {
