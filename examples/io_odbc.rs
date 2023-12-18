@@ -10,14 +10,14 @@ use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field};
 use arrow2::error::Result;
 use arrow2::io::odbc::api;
-use arrow2::io::odbc::api::Cursor;
+use arrow2::io::odbc::api::{ConnectionOptions, Cursor};
 use arrow2::io::odbc::read;
 use arrow2::io::odbc::write;
 
 fn main() -> Result<()> {
     let connector = "Driver={SQLite3};Database=sqlite-test.db";
     let env = api::Environment::new()?;
-    let connection = env.connect_with_connection_string(connector)?;
+    let connection = env.connect_with_connection_string(connector, ConnectionOptions::default())?;
 
     // let's create an empty table with a schema
     connection.execute("DROP TABLE IF EXISTS example;", ())?;
