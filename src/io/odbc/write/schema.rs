@@ -1,27 +1,7 @@
 use super::super::api;
 
-use crate::datatypes::{DataType, Field};
+use crate::datatypes::DataType;
 use crate::error::{Error, Result};
-
-/// Infers the [`api::ColumnDescription`] from the fields
-pub fn infer_descriptions(fields: &[Field]) -> Result<Vec<api::ColumnDescription>> {
-    fields
-        .iter()
-        .map(|field| {
-            let nullability = if field.is_nullable {
-                api::Nullability::Nullable
-            } else {
-                api::Nullability::NoNulls
-            };
-            let data_type = data_type_to(field.data_type())?;
-            Ok(api::ColumnDescription {
-                name: api::U16String::from_str(&field.name).into_vec(),
-                nullability,
-                data_type,
-            })
-        })
-        .collect()
-}
 
 pub fn data_type_to(data_type: &DataType) -> Result<api::DataType> {
     Ok(match data_type {
