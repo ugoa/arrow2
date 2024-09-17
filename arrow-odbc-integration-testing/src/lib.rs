@@ -13,7 +13,7 @@ lazy_static! {
 
 /// Connection string for our test instance of Microsoft SQL Server
 const MSSQL: &str =
-    "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;";
+    "Driver={ODBC Driver 18 for SQL Server};Server=127.0.0.1;UID=SA;PWD=My@Test@Password1;TrustServerCertificate=yes;";
 
 /// Creates the table and assures it is empty. Columns are named a,b,c, etc.
 pub fn setup_empty_table(
